@@ -4,7 +4,7 @@
 -export([convert_bits_to_list/1]).
 -export([convert_t_to_list/1]).
 -export([series/2]).
--export([series_tuple/4]).
+-export([series_tuple/2]).
 
 %% is_builtin(module, fun, arity).
 %% is_builtin(erlang, is_tuple, 1).
@@ -26,20 +26,21 @@ convert_bits_to_list(A) ->
 convert_t_to_list(L) ->
     tuple_to_list(L).
 
-series_tuple(Dst, Str, N, Acc) ->
-     L = length(Str) + 1,
-     case L of
- 	L when L == N -> Dst;
- 	_ -> series_tuple(erlang:insert_element(Acc, Dst, lists:sublist(Str, N)), tl(Str), N, Acc+1)
+serie_tuple(Dst, Str, N, Acc) when N > 0 ->
+    case length(Str) + 1 of
+ 	    N -> Dst;
+ 	    _ -> serie_tuple(erlang:insert_element(Acc, Dst, lists:sublist(Str, N)), tl(Str), N, Acc+1)
      end.
+
+series_tuple(N, Str) when N > 0 andalso length(Str) >= N ->
+    serie_tuple({}, Str, N, 1).
 
 %% exercism
 serie(Dst, Str, N) ->
-    L = length(Str) + 1,
-    case L of
-	L when L == N -> Dst;
-	_ -> serie(lists:append(Dst, [lists:sublist(Str, N)]), tl(Str), N)
+    case length(Str) + 1 of
+	    N -> Dst;
+	    _ -> serie(Dst ++ [lists:sublist(Str, N)], tl(Str), N)
     end.
 
-series(N, Str) when length(Str) > 0 andalso length(Str) >= N ->
+series(N, Str) when N > 0 andalso length(Str) >= N ->
     serie([], Str, N).
