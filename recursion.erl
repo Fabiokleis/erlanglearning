@@ -1,5 +1,7 @@
 -module(recursion).
 -export([game/1]).
+-export([duplicate/2]).
+-export([steps/2]).
 
 guess_number(Answer, Try) ->
     io:format("Try to guess the random number, you have [~p] chances.~n", [Try]),
@@ -19,3 +21,10 @@ guess_number(Answer, Try) ->
 
 game(Try) ->
     guess_number(rand:uniform(100), Try).
+
+
+duplicate(0, _) ->
+    [];
+duplicate(N, Term) ->
+    [Term|duplicate(N-1, Term)].
+
