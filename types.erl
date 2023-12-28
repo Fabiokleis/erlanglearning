@@ -39,8 +39,8 @@ series_tuple(N, Str) when N > 0 andalso length(Str) >= N ->
 serie(Dst, Str, N) ->
     case length(Str) + 1 of
 	    N -> Dst;
-	    _ -> serie(Dst ++ [lists:sublist(Str, N)], tl(Str), N)
+	    _ -> serie([lists:sublist(Str, N)|Dst], tl(Str), N)
     end.
 
 series(N, Str) when N > 0 andalso length(Str) >= N ->
-    serie([], Str, N).
+    lists:reverse(serie([], Str, N)).
