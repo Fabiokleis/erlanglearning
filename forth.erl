@@ -21,6 +21,12 @@ dup([H|_] = Stack) -> [H|Stack].
 
 drop([_|T]) -> T.
 
+swap(Stack) when length(Stack) == 2 -> Stack;
+swap([H|T]) -> lists:reverse([hd(T)|[H|tl(T)]]).
+
+over([_|T] = Stack) when length(Stack) == 2 -> [hd(T)|Stack];
+over([_|T] = Stack) -> lists:reverse([hd(T)|Stack]).
+    
 push_arg(W) ->
     case catch list_to_integer(W) of
         {'EXIT', _} -> {error, badarg};
@@ -57,13 +63,14 @@ evaluate([H|T], Stack) when length(Stack) >= 1 ->
 		add -> evaluate(T, add(Stack));
 		sub -> evaluate(T, sub(Stack));
 		mul -> evaluate(T, mul(Stack));
-		divi -> if hd(Stack) =:= 0 -> {error, zero_division};
-			   true -> evaluate(T, [divi(Stack)])
-			end;
 		dup -> evaluate(T, dup(Stack));
 		drop -> evaluate(T, drop(Stack));
-		swap -> undefined;
-		over -> undefined;
+		divi -> if hd(Stack) =:= 0 -> {error, zero_division};
+			   true -> evaluate(T, [divi(Stack)]) end;
+		swap -> if length(Stack) < 2 -> {error, not_enough_args};
+			   true -> evaluate(T, swap(Stack)) end;
+		over -> if length(Stack) < 2 -> {error, not_enough_args};
+			   true -> evaluate(T, over(Stack)) end;
 		unknown_instruction -> {error, bad_instruction}
 	    end
     end.
