@@ -40,7 +40,7 @@ lookup_table(Name, Table) ->
 
 lexer([], Stack, Table) -> {Stack, Table};
 lexer([H|T], Stack, Table) ->
-    %%io:format("head: ~p~nstack: ~p~ntable: ~p~n~n", [H, Stack, Table]),
+    io:format("head: ~p~nstack: ~p~ntable: ~p~n~n", [H, Stack, Table]),
     case stack_ins(H) of
 	{lit, Int} -> lexer(T, [Int|Stack], Table);
 	{unknown_instruction, Ins} -> 
@@ -49,17 +49,22 @@ lexer([H|T], Stack, Table) ->
 		[{_, Values}] -> lexer(T, Values ++ Stack, Table)
 	    end;
 	ins -> 
+
 	    Nins = lists:takewhile(fun(C) -> C =/= ";" end, T), %% simply read until ;
-	    case lookup_table(hd(Nins), Table) of
-		[] -> 
-		    {Values, _} = lexer(tl(Nins), Stack, Table),
-		    lexer(lists:nthtail(length(Nins) + 1, T), Stack, [{hd(Nins), Values}|Table]);
-		[{Name, Values}] -> 
-		    {StackValues, _} = lexer(tl(Nins), Stack, Table),
-		    lexer(
-		      lists:nthtail(length(Nins) + 1, T), Stack,
-		      [{hd(Nins), StackValues}|lists:delete({Name, Values}, Table)]
-		     )
+	    case stack_ins(hd(Nins)) of
+		{lit, _} -> error(invalid_redefine);
+		_ -> 
+		    case lookup_table(hd(Nins), Table) of
+			[] -> 
+			    {Values, _} = lexer(tl(Nins), Stack, Table),
+			    lexer(lists:nthtail(length(Nins) + 1, T), Stack, [{hd(Nins), Values}|Table]);
+			[{Name, Values}] -> 
+			    {StackValues, _} = lexer(tl(Nins), Stack, Table),
+			    lexer(
+			      lists:nthtail(length(Nins) + 1, T), Stack,
+			      [{hd(Nins), StackValues}|lists:delete({Name, Values}, Table)]
+			     )
+		    end
 	    end;
 
 	_ -> 
