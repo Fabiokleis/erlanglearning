@@ -42,7 +42,7 @@ lexer([], Stack, Table) -> {Stack, Table};
 lexer([H|T], Stack, Table) ->
     %%io:format("head: ~p~nstack: ~p~ntable: ~p~n~n", [H, Stack, Table]),
     case stack_ins(H) of
-	{lit, Int} -> lexer(T, [{lit, Int}|Stack], Table);
+	{lit, Int} -> lexer(T, [Int|Stack], Table);
 	{unknown_instruction, Ins} -> 
 	    case lookup_table(Ins, Table) of
 		[] -> error(undefined_instruction);
@@ -55,34 +55,33 @@ lexer([H|T], Stack, Table) ->
 		    {Values, _} = lexer(tl(Nins), Stack, Table),
 		    lexer(lists:nthtail(length(Nins) + 1, T), Stack, [{hd(Nins), Values}|Table]);
 		[{Name, Values}] -> 
-		    {StackValues, _} = lexer(tl(Nins), [], Table),
+		    {StackValues, _} = lexer(tl(Nins), Stack, Table),
 		    lexer(
 		      lists:nthtail(length(Nins) + 1, T), Stack,
 		      [{hd(Nins), StackValues}|lists:delete({Name, Values}, Table)]
 		     )
 	    end;
 
-	_ -> lexer(T, [{ins, H}|Stack], Table)
+	_ -> 
+	    case lookup_table(H, Table) of
+		[] -> lexer(T, [H|Stack], Table);
+		[{_, Values}] -> lexer(T, Values ++ Stack, Table)
+	    end
     end.
 
 %% evaluator
 eval([], Evaluated) -> lists:reverse(Evaluated);
+eval([H|T], Evaluated) when is_integer(H) -> eval(T, [H|Evaluated]);
 eval([H|T], Evaluated) ->
-    io:format("stack: ~p~nevaluated: ~p~n", [H, Evaluated]),
-    case H of
-	{lit, Num} -> eval(T, [Num|Evaluated]);
-	{ins, Name} -> 
-	    case stack_ins(Name) of
-		add -> eval(T, add(Evaluated));
-		sub -> eval(T, sub(Evaluated));
-		mul -> eval(T, mul(Evaluated));
-		divi -> eval(T, divi(Evaluated));
-		dup -> eval(T, dup(Evaluated));
-		drop -> eval(T, drop(Evaluated));
-		swap -> eval(T, swap(Evaluated));
-		over -> eval(T, over(Evaluated))
-	    end;
-	_ -> error(wtf) %% impossivel chegar aqui meu consagrado
+    case stack_ins(H) of
+	add -> eval(T, add(Evaluated));
+	sub -> eval(T, sub(Evaluated));
+	mul -> eval(T, mul(Evaluated));
+	divi -> eval(T, divi(Evaluated));
+	dup -> eval(T, dup(Evaluated));
+	drop -> eval(T, drop(Evaluated));
+	swap -> eval(T, swap(Evaluated));
+	over -> eval(T, over(Evaluated))
     end.
 
 evaluate(Instructions) -> 
